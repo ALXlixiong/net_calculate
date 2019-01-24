@@ -7,12 +7,14 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 #include <sys/socket.h>
 #include <pthread.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <string>
 #define MAX_QUEUE 10
+#define EXP 0.000000000001
 
 class Server;
 typedef struct info_t
@@ -20,7 +22,6 @@ typedef struct info_t
   Server *p;
   int sock;
 }info_t;
-
 class Server
 {
   private:
@@ -87,10 +88,16 @@ class Server
           rsq.status = -1;
         break;
       case '%':
-        rsq.result = rq.x % rq.y;  //两个数必须是整数
+        if(fabs(rq.x-(int)rq.x)<EXP && fabs(rq.y-(int)rq.y)<EXP)
+          rsq.result = (int)rq.x % (int)rq.y;  //两个数必须是整数
+        else 
+          rsq.status = -1;
         break;
       case '^':
-        rsq.result = rq.x ^ rq.y;
+        if(fabs(rq.x-(int)rq.x)<EXP && fabs(rq.y-(int)rq.y)<EXP)
+          rsq.result = (int)rq.x ^ (int)rq.y;
+        else 
+          rsq.status = -1;
         break;
       default:
         std::cout<<"input option error"<<std::endl;
@@ -98,12 +105,38 @@ class Server
     }
     send(sock,&rsq,sizeof(rsq),0);
   }
+  void DateFun(Request_t rq,int &sock)
+  {
+    Response_t rsq;
+    int tmp = (int)rq.y;
+    switch(tmp)
+    {
+      case 1:
+        rsq.result = rq.d1-rq.d2;
+        break;
+      case 2:
+        {
+          switch(rq.op)
+          {
+            case '+':
+              rsq.result_date = rq.d1+rq.x;
+              break;
+            case '-':
+              rsq.result_date = rq.d1-rq.x;
+              break;
+          }
+        }
+        break;
+    }
+    send(sock,&rsq,sizeof(rsq),0);
+  }
   void Kind(Request_t rq,int &sock)
   {
-    switch(rq.cal_kind)
+    int tmp = (int)rq.cal_kind;
+    switch(tmp)
     {
       case 1:  //日期
-
+        DateFun(rq,sock);
         break;
       case 2:  //数字
         NumberFun(rq,sock);

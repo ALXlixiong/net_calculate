@@ -12,7 +12,6 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <string>
-
 class Client 
 {
   private:
@@ -29,21 +28,103 @@ class Client
     {
       close(_sock);
     }
-    void NumberFun(Request_t &rq)
+    void TwoDate(Request_t &rq)
     {
       Response_t rsq;
-      std::cout<<"请输入操作数<x,y>";
-      std::cin>>rq.x>>rq.y;
-      std::cout<<"请输入操作码《+ - * / ^ %》"<<std::endl;
-      std::cout<<"Please enter>>";
+      std::cout<<"Please enter first date:";
+      std::cin>>rq.d1;
+      std::cin.clear();
+      std::cin.sync();
+      std::cin.ignore(1024,'\n');
+      std::cout<<"Please enter second date:";
+      std::cin>>rq.d2;
+      send(_sock,&rq,sizeof(rq),0);
+      recv(_sock,&rsq,sizeof(rsq),0);
+      std::cout<<"result = "<<(int)rsq.result<<std::endl;
+    }
+    void DateDay(Request_t &rq)
+    {
+      Response_t rsq;
+      std::cout<<"Please enter date:";
+      std::cin>>rq.d1;
+      std::cin.clear();
+      std::cin.sync();
+      std::cin.ignore(1024,'\n');
+      std::cout<<"Please enter day:";
+      std::cin>>rq.x;
+      std::cin.clear();
+      std::cin.sync();
+      std::cin.ignore(1024,'\n');
+      std::cout<<"Please enter op[+ -]>>";
       std::cin>>rq.op;
       send(_sock,&rq,sizeof(rq),0);
       recv(_sock,&rsq,sizeof(rsq),0);
-      if(rsq.status == 0)
-        std::cout<<"result = "<<rsq.result<<std::endl;
-      else if(rsq.status == -1)
-        std::cout<<"input error"<<std::endl;
-      std::cout<<std::endl;
+      std::cout<<"result = "<<rsq.result_date<<std::endl;
+    }
+    void DateFun(Request_t &rq)
+    {
+      std::cout<<"--------------------------------"<<std::endl;
+      std::cout<<"-------1:计算两个日期之差-------"<<std::endl;
+      std::cout<<"-2:加上或者减去到指定日期的天数-"<<std::endl;
+      int ch = 0;
+      do{
+        std::cout<<"请输入运算类型相应数字"<<std::endl;
+        double kind = 0;
+        std::cin>>kind;
+        if(kind != 1.0 && kind != 2.0)
+        {
+          std::cout<<"Please enter 1 2 !!!"<<std::endl;
+          std::cin.clear();
+          std::cin.sync();
+          std::cin.ignore(1024,'\n');
+          continue;
+        }
+        int tmp = (int)kind;
+        switch(tmp)
+        {
+          case 1:
+            rq.y = 1;
+            TwoDate(rq);
+            break;
+          case 2:
+            rq.y = 2;
+            DateDay(rq);
+            break;
+          default:
+            std::cout<<"input error"<<std::endl;
+            break;
+        }
+        std::cin.clear();
+        std::cin.sync();
+        std::cin.ignore(1024,'\n');
+        std::cout<<"Whether or not to Continue[y/n]:";
+        ch = getchar();
+      }while(ch == 'y');
+       
+    }
+    void NumberFun(Request_t &rq)
+    {
+      int ch = 0;
+      do{
+        Response_t rsq;
+        std::cout<<"请输入操作数<x,y>";
+        std::cin>>rq.x>>rq.y;
+        std::cout<<"请输入操作码[+ - * / ^ %]"<<std::endl;
+        std::cout<<"Please enter>>";
+        std::cin>>rq.op;
+        send(_sock,&rq,sizeof(rq),0);
+        recv(_sock,&rsq,sizeof(rsq),0);
+        if(rsq.status == 0)
+          std::cout<<"result = "<<rsq.result<<std::endl;
+        else if(rsq.status == -1)
+          std::cout<<"input error"<<std::endl;
+        std::cout<<std::endl;
+        std::cout<<"Whether or not to Continue[y/n]:";
+        std::cin.clear();
+        std::cin.sync();
+        std::cin.ignore(1024,'\n');
+        ch = getchar();
+      }while(ch == 'y');
     }
     void InputFun()
     {
@@ -61,12 +142,19 @@ class Client
         std::cout<<"--------------------------------"<<std::endl;
         std::cout<<"Please enter>>";
         std::cin>>rq.cal_kind;
-        //fflush(stdout);
-        //sleep(1);
-        //InputFun(); 
-        switch(rq.cal_kind)
+        if(rq.cal_kind != 1.0 && rq.cal_kind != 2.0 && rq.cal_kind != 3.0)
+        {
+          std::cout<<"Please enter 1 2 3!!!"<<std::endl;
+          std::cin.clear();
+          std::cin.sync();
+          std::cin.ignore(1024,'\n');
+          continue;
+        }
+        int tmp = (int)rq.cal_kind;
+        switch(tmp)
         {
           case 1:
+            DateFun(rq);
             break;
           case 2:
             NumberFun(rq);
