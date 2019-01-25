@@ -27,7 +27,6 @@ class Date
     _year = d._year;
     _month = d._month;
     _day = d._day;
-
   }
   Date& operator=(const Date &d)
   {
@@ -36,43 +35,36 @@ class Date
       _year = d._year;
       _month = d._month;
       _day = d._day;
-
     }
     return *this;
-
   }
   bool operator==(const Date &d)
   {
     if(_year == d._year && _month == d._month && _day == d._day)
       return true;
     return false;
-
   }
   Date operator++(int)
   {
     Date tmp(*this);
     *this = *this+1;
     return tmp;
-
   }
   Date operator++()
   {
     *this = *this+1;
     return *this;
-
   }
   Date operator--(int)
   {
     Date tmp(*this);
     *this = *this-1;
     return tmp;
-
   }
   Date operator--()
   {
     *this = *this-1;
     return *this;
-
   }
   int InvalidDay(const Date& tmp)
   {
@@ -80,7 +72,6 @@ class Date
     if((tmp._year % 4 == 0 && tmp._year % 100 != 0)||tmp._year % 400 == 0)
       arr[2] += 1;
     return arr[tmp._month];
-
   }
   Date operator-(int days)
   {
@@ -93,13 +84,10 @@ class Date
       {
         tmp._month = 12;
         tmp._year -= 1;
-
       }
       tmp._day += InvalidDay(tmp);
-
     }
     return tmp;
-
   }
   Date operator+(int days)
   {
@@ -112,25 +100,20 @@ class Date
       {
         tmp._year += 1;
         tmp._month = 1;
-
       }
       tmp._day -= InvalidDay(tmp);
-
     }
     return tmp;
-
   }
   Date& operator-=(int days)
   {
     *this = *this-days;
     return *this;
-
   }
   Date& operator+=(int days)
   {
     *this = *this+days;
     return *this;
-
   }
   bool operator>(const Date& d)
   {
@@ -138,16 +121,13 @@ class Date
         || (_year == d._year && _month == d._month && _day>d._day))
       return true;
     return false;
-
   }
   bool operator<(const Date& d)
   {
     if(*this>d)
       return false;
     return true;
-
   }
-
   int operator-(const Date& d)
   {
     int count = 0;
@@ -158,9 +138,7 @@ class Date
       {
         --tmp;
         ++count;
-
       }
-
     }
     else if(tmp<*this)
     {
@@ -168,16 +146,12 @@ class Date
       {
         ++tmp;
         ++count;
-
       }
-
     }
     else 
       return 0;
     return count;
-
   }
-
 };
 
 std::ostream& operator<<(std::ostream& _cout,const Date& d)
@@ -193,9 +167,7 @@ std::istream& operator>>(std::istream& _cin, Date& d)
   _cin>>d._month;
   _cin>>d._day;
   return _cin;
-
 }
-
 struct Request_t{
   double cal_kind;//calculate kind (1)date(2)number(3)conversion of number systems
   double x;
@@ -209,4 +181,5 @@ struct Response_t{
   int status;
   double result;
   Date result_date;
+  int res[32];
 };

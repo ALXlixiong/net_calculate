@@ -68,7 +68,8 @@ class Client
       std::cout<<"-2:加上或者减去到指定日期的天数-"<<std::endl;
       int ch = 0;
       do{
-        std::cout<<"请输入运算类型相应数字"<<std::endl;
+begin:
+        std::cout<<"请输入运算类型相应数字:";
         double kind = 0;
         std::cin>>kind;
         if(kind != 1.0 && kind != 2.0)
@@ -77,7 +78,7 @@ class Client
           std::cin.clear();
           std::cin.sync();
           std::cin.ignore(1024,'\n');
-          continue;
+          goto begin;
         }
         int tmp = (int)kind;
         switch(tmp)
@@ -126,9 +127,43 @@ class Client
         ch = getchar();
       }while(ch == 'y');
     }
-    void InputFun()
+    void ExchangeFun(Request_t &rq)
     {
-      ;
+      int ch = 0;
+      do
+      {
+begin:
+        std::cout<<"Please enter decimal number:";
+        std::cin>>rq.x;
+        int tmp = (int)rq.x;
+        if((tmp-rq.x) != 0)
+        {
+          std::cout<<"input error"<<std::endl;
+          std::cin.clear();
+          std::cin.sync();
+          std::cin.ignore(1024,'\n');
+          goto begin;
+        }
+        Response_t rsq;
+        send(_sock,&rq,sizeof(rq),0);
+        recv(_sock,&rsq,sizeof(rsq),0);
+        bool flag = false;
+        for(int i = 0;i<32;++i)
+        {
+          if(rsq.res[i] == 1 && flag == false)
+            flag = true;
+          if(flag == true)
+            std::cout<<rsq.res[i];
+        }
+        if(flag == false)
+          std::cout<<"0";
+        std::cout<<std::endl;
+        std::cout<<"Whether or not to Continue[y/n]:";
+        std::cin.clear();
+        std::cin.sync();
+        std::cin.ignore(1024,'\n');
+        ch = getchar();
+      }while(ch == 'y');
     }
     void Run()
     {
@@ -160,6 +195,7 @@ class Client
             NumberFun(rq);
             break;
           case 3:
+            ExchangeFun(rq);
             break;
           default:
             std::cerr<<"input error"<<std::endl;

@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <string>
+#include "pthreadPool.hpp"
 #define MAX_QUEUE 10
 #define EXP 0.000000000001
 
@@ -27,11 +28,15 @@ class Server
   private:
     int _port;
     int listen_sock;
+    pthreadPool _pool;
   public:
     Server(int port)
       :_port(port)
       ,listen_sock(-1)
-  {}
+      ,_pool(5)
+  {
+    _pool.pthreadPoolInit();
+  }
     ~Server()
     {
       close(listen_sock);
@@ -68,7 +73,7 @@ class Server
       exit(1);
     }
   }
-  void NumberFun(Request_t rq,int &sock)
+  static void NumberFun(Request_t rq,int &sock)
   {
     Response_t rsq;
     rsq.status = 0;
@@ -105,7 +110,7 @@ class Server
     }
     send(sock,&rsq,sizeof(rsq),0);
   }
-  void DateFun(Request_t rq,int &sock)
+  static void DateFun(Request_t rq,int &sock)
   {
     Response_t rsq;
     int tmp = (int)rq.y;
@@ -130,7 +135,20 @@ class Server
     }
     send(sock,&rsq,sizeof(rsq),0);
   }
-  void Kind(Request_t rq,int &sock)
+  static void ExchangeFun(Request_t rq,int sock)
+  {
+    Response_t rsq;
+    int num = (int)rq.x;
+    for(int i = 31;i>=0;--i)
+    {
+      if(num == 0)
+        break;
+      rsq.res[i] = num%2;
+      num /= 2;
+    }
+    send(sock,&rsq,sizeof(rsq),0);
+  }
+  static void Kind(Request_t rq,int &sock)
   {
     int tmp = (int)rq.cal_kind;
     switch(tmp)
@@ -142,19 +160,19 @@ class Server
         NumberFun(rq,sock);
         break;
       case 3:  //进制转化
+        ExchangeFun(rq,sock);
         break;
       default:
         std::cout<<"input error"<<std::endl;
         break;
     }
   }
-  static void *thread_route(void *arg)
-  {
-    info_t *info = (info_t *)arg; 
+  static void thread_route(int sock)
+  { 
     while(1)
     {
       Request_t rq;
-      int ret_recv = recv(info->sock,&rq,sizeof(rq),0);
+      int ret_recv = recv(sock,&rq,sizeof(rq),0);
       if(ret_recv<0)
       {
         std::cerr<<"recv error"<<std::endl;
@@ -165,11 +183,9 @@ class Server
         break;
       }
       else{
-        info->p->Kind(rq,info->sock);  
+        Kind(rq,sock);  
       }
     }
-    close(info->sock);
-    return NULL;
   }
   void Run()
   {
@@ -184,16 +200,8 @@ class Server
         continue;
       }
       std::cout<<"get a client..."<<std::endl;
-      pthread_t tid;
-      info_t *info = new info_t;
-      info->sock = client_sock;
-      info->p = this;
-      if(pthread_create(&tid,NULL,thread_route,(void *)info)<0)
-      {
-        std::cerr<<"pthread_create error"<<std::endl;
-        exit(2);
-      }
-      pthread_join(tid,NULL);
+      Task t(client_sock,Server::thread_route);
+      _pool.pushTask(t);
     }
   }
 };
